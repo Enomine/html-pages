@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Conan Exiles 지도</title>
+  <link rel="icon" href="data:,">
+  <style>
+    :root {
+      --bg: #f6f5f2; --card: #ffffff; --fg: #1f1d1a; --muted: #6f6a62;
+      --line: #e4e0d8; --link: #8a4b1f; --tag: #efe7dc;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #16140f; --card: #1f1c16; --fg: #ede7dc; --muted: #9b948a;
+        --line: #2e2a22; --link: #e0a06a; --tag: #2a251c;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 40px 16px 64px; background: var(--bg); color: var(--fg);
+           font: 16px/1.6 system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif; }
+    main { max-width: 720px; margin: 0 auto; }
+    nav { font-size: .9rem; color: var(--muted); margin-bottom: 16px; }
+    nav a { color: var(--link); text-decoration: none; }
+    nav a:hover { text-decoration: underline; }
+    header h1 { font-size: 1.6rem; margin: 0 0 6px; letter-spacing: -.01em; }
+    header p { color: var(--muted); margin: 0 0 28px; }
+    .maps { display: grid; gap: 16px; }
+    .map { display: block; background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+           padding: 18px 20px; text-decoration: none; color: inherit; }
+    .map:hover { border-color: var(--link); }
+    .map h2 { font-size: 1.1rem; margin: 0 0 4px; color: var(--link); }
+    .map p { margin: 0; color: var(--muted); font-size: .95rem; }
+    .map .meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .map .meta span { font-size: .78rem; background: var(--tag); color: var(--muted);
+                      padding: 2px 9px; border-radius: 999px; }
+    footer { color: var(--muted); font-size: .85rem; margin-top: 32px; line-height: 1.7; }
+  </style>
+</head>
+<body>
+  <main>
+    <nav><a href="../">← 전체 목차</a></nav>
+    <header>
+      <h1>Conan Exiles 지도</h1>
+      <p>코난 엑자일 한국어 대화형 지도. 장소·자원·NPC를 분류별로 켜고 끄며 찾을 수 있습니다.</p>
+    </header>
+
+    <div class="maps">
+      <a class="map" href="exiled-lands-ko.html">
+        <h2>추방자의 땅 (Exiled Lands)</h2>
+        <p>기본 맵. 위치 4,664곳, 타일 지도 zoom 0~3.</p>
+        <div class="meta"><span>MapVault 기반</span><span>한국어 번역</span></div>
+      </a>
+      <a class="map" href="siptah-ko.html">
+        <h2>시프타 섬 (Isle of Siptah)</h2>
+        <p>확장팩 맵. 위치 4,539곳, 설명에 참고 사진 포함.</p>
+        <div class="meta"><span>die-verbannten.de 기반</span><span>한국어 번역</span></div>
+      </a>
+    </div>
+
+    <footer>
+      지도·아이콘 © Funcom. 비공식 한국어 번역이며 게임의 공식 명칭과 다를 수 있습니다.<br>
+      지도 타일과 사진은 화면에 보이는 부분만 내려받습니다.
+    </footer>
+  </main>
+</body>
+</html>
