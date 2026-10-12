@@ -1,7 +1,11 @@
 /* Shared viewer for the Conan Exiles Korean maps (Leaflet 1.9).
  * The page defines DATA (records, groups, labels, icons, defaultTypes) and CONFIG
  * (tiles, bounds, minZoom, maxZoom, maxNativeZoom, attribution, coord).
- * Built by tools/build_map.py; this file is hand-written and shared by every map page. */
+ * Built by tools/build_map.py; this file is hand-written and shared by every map page.
+ *
+ * Markers are not DOM elements: all selected records are painted on one canvas
+ * (IconCanvas below), so zooming with 4,000+ markers costs one redraw, not
+ * thousands of style updates. Hover and click use a hit test on the painted points. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -10,6 +14,7 @@
   const selected = new Set(DEFAULTS);
   const counts = {};
   const bounds = L.latLngBounds(CONFIG.bounds);
+  const ICON = 25, HALF = ICON / 2, HIT = 13;
 
   // CRS.Simple shifted so the map's north-west corner is pixel (0,0) at every zoom.
   // That is exactly how tools/build_map.py cuts the tiles: zoom 0 == 1px per map unit.
@@ -52,47 +57,127 @@
   const tpl = document.createElement('template');
   function plain(s) { tpl.innerHTML = s || ''; return tpl.content.textContent || ''; }
 
-  // --- markers: created lazily, only the ones inside the (padded) viewport live in the DOM
-  const iconCache = {};
-  function iconFor(type) {
-    let icon = iconCache[type];
-    if (!icon) {
-      const src = DATA.icons[type];
-      icon = src ? L.icon({ iconUrl: src, iconSize: [25, 25], iconAnchor: [12, 12] })
-                 : L.divIcon({ html: '◆', className: 'fallback-marker', iconSize: [16, 16] });
-      iconCache[type] = icon;
-    }
-    return icon;
-  }
-  const markers = new Array(R.length);
-  function markerFor(i) {
-    let m = markers[i];
-    if (!m) {
-      const r = R[i];
-      m = L.marker(r.ll, { icon: iconFor(r.type), title: r.ko + ' / ' + r.en, keyboard: false });
-      m.on('click', () => show(i));
-      markers[i] = m;
-    }
-    return m;
-  }
-  R.forEach(r => {
+  R.forEach((r, i) => {
+    r.idx = i;
     counts[r.layer] = (counts[r.layer] || 0) + 1;
     r.ll = L.latLng(r.lat, r.lng);
     r.search = (r.ko + ' ' + r.en + ' ' + plain(r.info)).toLowerCase();
   });
 
-  const onMap = new Set();
-  function refreshMarkers() {
-    const view = map.getBounds().pad(0.25);
-    const want = new Set();
-    for (let i = 0; i < R.length; i++) {
-      const r = R[i];
-      if (selected.has(r.layer) && view.contains(r.ll)) want.add(i);
+  // --- icon images (one <img> per type, drawn onto the canvas)
+  const iconImages = {};
+  let redrawPending = false;
+  function iconImage(type) {
+    let img = iconImages[type];
+    if (img === undefined) {
+      const src = DATA.icons[type];
+      if (!src) { img = null; }
+      else {
+        img = new Image();
+        img.decoding = 'async';
+        img.onload = () => { if (canvas) canvas.redraw(); };
+        img.src = src;
+      }
+      iconImages[type] = img;
     }
-    for (const i of onMap) if (!want.has(i)) { map.removeLayer(markers[i]); onMap.delete(i); }
-    for (const i of want) if (!onMap.has(i)) { markerFor(i).addTo(map); onMap.add(i); }
+    return img;
   }
-  map.on('moveend', refreshMarkers);
+
+  // --- IconCanvas: a Leaflet renderer that paints records as icons on one canvas.
+  // L.Renderer already handles container placement and the CSS zoom animation;
+  // we only size the canvas and paint.
+  const IconCanvas = L.Renderer.extend({
+    options: { padding: 0.1, pane: 'markerPane' },
+    setItems(items) { this._items = items; this.redraw(); },
+    redraw() {
+      if (redrawPending || !this._map) return;
+      redrawPending = true;
+      L.Util.requestAnimFrame(() => { redrawPending = false; this._draw(); });
+    },
+    hitTest(layerPoint) {
+      const items = this._items || [];
+      for (let k = items.length - 1; k >= 0; k--) {   // topmost (drawn last) first
+        const r = items[k];
+        if (r.drawn && Math.abs(r.px - layerPoint.x) <= HIT && Math.abs(r.py - layerPoint.y) <= HIT) return r;
+      }
+      return null;
+    },
+    _initContainer() {
+      this._container = document.createElement('canvas');
+      this._container.style.pointerEvents = 'none';
+      this._ctx = this._container.getContext('2d');
+    },
+    _destroyContainer() {
+      L.DomUtil.remove(this._container);
+      delete this._container;
+      delete this._ctx;
+    },
+    _update() {
+      if (this._map._animatingZoom && this._bounds) return;
+      L.Renderer.prototype._update.call(this);
+      const b = this._bounds, c = this._container, size = b.getSize();
+      const m = Math.min(3, Math.max(1, window.devicePixelRatio || 1));
+      L.DomUtil.setPosition(c, b.min);
+      c.width = Math.round(m * size.x);
+      c.height = Math.round(m * size.y);
+      c.style.width = size.x + 'px';
+      c.style.height = size.y + 'px';
+      this._ctx.setTransform(m, 0, 0, m, -b.min.x * m, -b.min.y * m);
+      this._draw();
+    },
+    _draw() {
+      const ctx = this._ctx, b = this._bounds;
+      if (!ctx || !b) return;
+      const size = b.getSize();
+      ctx.clearRect(b.min.x, b.min.y, size.x, size.y);
+      const minX = b.min.x - ICON, minY = b.min.y - ICON, maxX = b.max.x + ICON, maxY = b.max.y + ICON;
+      const items = this._items || [];
+      for (let k = 0; k < items.length; k++) {
+        const r = items[k];
+        const p = this._map.latLngToLayerPoint(r.ll);
+        r.px = p.x; r.py = p.y;
+        r.drawn = p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY;
+        if (!r.drawn) continue;
+        const img = iconImage(r.type);
+        if (img && img.complete && img.naturalWidth) {
+          ctx.drawImage(img, p.x - HALF, p.y - HALF, ICON, ICON);
+        } else {
+          ctx.fillStyle = '#ffe0a1';
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y - 7); ctx.lineTo(p.x + 7, p.y); ctx.lineTo(p.x, p.y + 7); ctx.lineTo(p.x - 7, p.y);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+    },
+  });
+  let canvas = null;
+  let visible = [];
+
+  // --- hover tooltip + click, driven by map events and the canvas hit test
+  const style = document.createElement('style');
+  style.textContent = '.marker-tip{position:absolute;z-index:1001;background:#17232dee;color:#eaf1f6;font-size:12px;' +
+    'padding:4px 8px;border-radius:5px;pointer-events:none;white-space:nowrap;border:1px solid #536473}' +
+    '.leaflet-container.has-hit{cursor:pointer}';
+  document.head.append(style);
+  const tip = L.DomUtil.create('div', 'marker-tip', map.getContainer());
+  tip.hidden = true;
+  let hovered = null;
+  function setHover(r, containerPoint) {
+    hovered = r;
+    if (r) {
+      tip.textContent = r.ko + ' / ' + r.en;
+      tip.style.left = (containerPoint.x + 14) + 'px';
+      tip.style.top = (containerPoint.y + 14) + 'px';
+      tip.hidden = false;
+      L.DomUtil.addClass(map.getContainer(), 'has-hit');
+    } else {
+      tip.hidden = true;
+      L.DomUtil.removeClass(map.getContainer(), 'has-hit');
+    }
+  }
+  map.on('click', e => { const r = canvas && canvas.hitTest(e.layerPoint); if (r) show(r.idx); });
+  map.on('mouseout zoomstart dragstart', () => setHover(null));
 
   // --- filter sidebar
   const known = new Set(DATA.groups.flatMap(g => g.types));
@@ -144,10 +229,10 @@
 
   function update() {
     document.querySelectorAll('[data-type]').forEach(el => { el.checked = selected.has(el.dataset.type); });
-    let n = 0;
-    for (const r of R) if (selected.has(r.layer)) n++;
-    $('status').textContent = '표시 중 ' + n.toLocaleString() + ' / 전체 ' + R.length.toLocaleString() + '개';
-    refreshMarkers();
+    visible = R.filter(r => selected.has(r.layer));
+    visible.sort((a, b) => b.lat - a.lat);  // southern markers paint over northern ones, like DOM markers did
+    $('status').textContent = '표시 중 ' + visible.length.toLocaleString() + ' / 전체 ' + R.length.toLocaleString() + '개';
+    if (canvas) canvas.setItems(visible);
   }
 
   // --- detail panel
@@ -216,11 +301,13 @@
     }
   };
 
-  // --- in-game coordinate badge
+  // --- in-game coordinate badge + hover
   const C = CONFIG.coord;
   map.on('mousemove', e => {
     const x = C.xScale * e.latlng.lng + C.xOffset, y = C.yScale * e.latlng.lat + C.yOffset;
     $('badge').textContent = '지도 좌표 X: ' + x.toFixed(0) + ' · Y: ' + y.toFixed(0);
+    const r = canvas && !map._animatingZoom ? canvas.hitTest(e.layerPoint) : null;
+    if (r !== hovered || r) setHover(r, e.containerPoint);
   });
 
   // --- image lightbox for photos inside descriptions
@@ -232,9 +319,10 @@
 
   // --- go
   fitFullMap(false);
+  canvas = new IconCanvas().addTo(map);
   update();
   // Small hook for console debugging and the performance checks in tools/.
-  window.conanMap = { map, selected, update, onMap, defaults: DEFAULTS };
+  window.conanMap = { map, selected, update, canvas, defaults: DEFAULTS, visibleCount: () => visible.length };
   let resizeTimer;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);

@@ -38,7 +38,9 @@ python -m unittest tools.test_build_map     # 스크립트 테스트
 ```
 
 뷰어 동작(필터·검색·좌표 표시)은 `ConanExile/map-app.js` 한 곳에서 고칩니다.
-마커는 화면 범위 안의 것만 DOM에 올리고 이동·줌이 끝날 때 갱신합니다.
+마커는 DOM 요소가 아니라 캔버스 한 장에 그립니다(`IconCanvas`, Leaflet `L.Renderer` 확장).
+4,000개를 전부 켜도 줌 한 번에 다시 그리는 비용이 2~3ms라 60fps가 유지됩니다.
+마우스오버 이름 표시와 클릭은 그려진 좌표에 대한 히트테스트로 처리합니다.
 
 ## 파일 추가하기
 
