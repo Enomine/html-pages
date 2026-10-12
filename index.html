@@ -5,29 +5,63 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>HTML Pages</title>
   <style>
-    :root { --bg: #fafafa; --fg: #222; --muted: #777; --link: #0b63ce; }
-    @media (prefers-color-scheme: dark) {
-      :root { --bg: #111; --fg: #eee; --muted: #999; --link: #6cb0ff; }
+    :root {
+      --bg: #f6f5f2; --card: #ffffff; --fg: #1f1d1a; --muted: #6f6a62;
+      --line: #e4e0d8; --link: #8a4b1f; --tag: #efe7dc;
     }
-    body { margin: 0; padding: 32px 16px; background: var(--bg); color: var(--fg);
-           font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
-    main { max-width: 640px; margin: 0 auto; }
-    h1 { font-size: 1.5rem; margin: 0 0 8px; }
-    p { color: var(--muted); margin: 0 0 24px; }
-    ul { list-style: none; padding: 0; margin: 0; }
-    li { padding: 10px 0; border-top: 1px solid rgba(128,128,128,.25); }
-    a { color: var(--link); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    code { font-family: ui-monospace, Consolas, monospace; font-size: .9em; }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #16140f; --card: #1f1c16; --fg: #ede7dc; --muted: #9b948a;
+        --line: #2e2a22; --link: #e0a06a; --tag: #2a251c;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 40px 16px 64px; background: var(--bg); color: var(--fg);
+           font: 16px/1.6 system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif; }
+    main { max-width: 720px; margin: 0 auto; }
+    header h1 { font-size: 1.6rem; margin: 0 0 6px; letter-spacing: -.01em; }
+    header p { color: var(--muted); margin: 0 0 32px; }
+    section { background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+              padding: 20px 22px; margin-bottom: 20px; }
+    section h2 { font-size: 1.05rem; margin: 0 0 2px; display: flex; align-items: baseline; gap: 10px; }
+    section h2 code { font-size: .8rem; color: var(--muted); background: var(--tag);
+                      padding: 2px 8px; border-radius: 999px; font-family: ui-monospace, Consolas, monospace; }
+    section > p { color: var(--muted); margin: 0 0 12px; font-size: .95rem; }
+    ol { list-style: none; padding: 0; margin: 0; }
+    li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+         padding: 12px 0; border-top: 1px solid var(--line); }
+    li a { color: var(--link); text-decoration: none; font-weight: 600; }
+    li a:hover { text-decoration: underline; }
+    li small { color: var(--muted); white-space: nowrap; font-size: .85rem; }
+    footer { color: var(--muted); font-size: .85rem; margin-top: 32px; }
+    footer code { font-family: ui-monospace, Consolas, monospace; }
   </style>
 </head>
 <body>
   <main>
-    <h1>HTML Pages</h1>
-    <p>이 repo에 올린 HTML 파일 목록입니다. 파일을 추가하면 아래 링크도 같이 갱신하세요.</p>
-    <ul>
-      <li><a href="pages/sample.html">pages/sample.html</a> — 자리표시용 샘플</li>
-    </ul>
+    <header>
+      <h1>HTML Pages</h1>
+      <p>GitHub Pages에 올려 둔 HTML 파일 목차입니다. 폴더 하나가 한 그룹입니다.</p>
+    </header>
+
+    <section>
+      <h2>Conan Exiles <code>ConanExile/</code></h2>
+      <p>코난 엑자일 맵 지도 (한국어)</p>
+      <ol>
+        <li>
+          <a href="ConanExile/exiled-lands-ko.html">추방자의 땅 한국어 지도</a>
+          <small>36 MB · MapVault 기반</small>
+        </li>
+        <li>
+          <a href="ConanExile/siptah-ko.html">시프타 섬 한국어 지도</a>
+          <small>19 MB</small>
+        </li>
+      </ol>
+    </section>
+
+    <footer>
+      새 파일을 올리면 이 목차에 한 줄 추가하세요. 지도 파일은 이미지가 통째로 들어 있어 첫 로딩에 수십 MB를 받습니다.
+    </footer>
   </main>
 </body>
 </html>
