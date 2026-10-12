@@ -1,0 +1,24 @@
+{
+  "exiled-lands": {
+    "src": "C:/Users/InNomine/Downloads/추방자의땅_MapVault_한국어_지도.html",
+    "html": "ConanExile/exiled-lands-ko.html",
+    "assets": "ConanExile/exiled-lands",
+    "bounds": [[-1000, 0], [531.25, 1500]],
+    "minZoom": -5,
+    "maxZoom": 4,
+    "bg": "#14191a",
+    "attribution": "지도 © Funcom · <a href='http://conanmap.mapvault.net/' target='_blank' rel='noopener'>MapVault</a>",
+    "coord": {"xScale": 553, "xOffset": -339900, "yScale": -555, "yOffset": -164605}
+  },
+  "siptah": {
+    "src": "C:/Users/InNomine/Downloads/시프타섬_한국어_지도.html",
+    "html": "ConanExile/siptah-ko.html",
+    "assets": "ConanExile/siptah",
+    "bounds": [[-500, -500], [400, 400]],
+    "minZoom": -3,
+    "maxZoom": 4,
+    "bg": "#14191a",
+    "attribution": "지도 © Funcom · <a href='https://www.die-verbannten.de/isle_of_siptah/' target='_blank' rel='noopener'>die-verbannten.de</a>",
+    "coord": {"xScale": 1000, "xOffset": 0, "yScale": -1000, "yOffset": 0}
+  }
+}
